@@ -694,13 +694,17 @@ enum IIT_Info {
   IIT_PTR_TO_ELT = 33,
   IIT_VEC_OF_ANYPTRS_TO_ELT = 34,
   IIT_I128 = 35,
-  IIT_V512 = 36,
-  IIT_V1024 = 37,
-  IIT_STRUCT6 = 38,
-  IIT_STRUCT7 = 39,
-  IIT_STRUCT8 = 40,
-  IIT_F128 = 41,
-  IIT_VEC_ELEMENT = 42
+  IIT_V128 = 36,
+  IIT_V256 = 37,
+  IIT_V512 = 38,
+  IIT_V1024 = 39,
+  IIT_V2048 = 40,
+  IIT_V4096 = 41,
+  IIT_STRUCT6 = 42,
+  IIT_STRUCT7 = 43,
+  IIT_STRUCT8 = 44,
+  IIT_F128 = 45,
+  IIT_VEC_ELEMENT = 46
 };
 
 static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
@@ -784,12 +788,28 @@ static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 64));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
+  case IIT_V128:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 128));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
+  case IIT_V256:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 256));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
   case IIT_V512:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 512));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_V1024:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 1024));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
+  case IIT_V2048:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 2048));
+    DecodeIITType(NextElt, Infos, OutputTable);
+    return;
+  case IIT_V4096:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Vector, 4096));
     DecodeIITType(NextElt, Infos, OutputTable);
     return;
   case IIT_PTR:

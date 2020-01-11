@@ -216,8 +216,15 @@ def llvm_v8i1_ty       : LLVMType<v8i1>;     //   8 x i1
 def llvm_v16i1_ty      : LLVMType<v16i1>;    //  16 x i1
 def llvm_v32i1_ty      : LLVMType<v32i1>;    //  32 x i1
 def llvm_v64i1_ty      : LLVMType<v64i1>;    //  64 x i1
+def llvm_v128i1_ty     : LLVMType<v128i1>;   // 128 x i1
+def llvm_v256i1_ty     : LLVMType<v256i1>;   // 256 x i1
 def llvm_v512i1_ty     : LLVMType<v512i1>;   // 512 x i1
 def llvm_v1024i1_ty    : LLVMType<v1024i1>;  //1024 x i1
+def llvm_v2048i1_ty    : LLVMType<v2048i1>;  //2048 x i1
+def llvm_v4096i1_ty    : LLVMType<v4096i1>;  //4096 x i1
+def llvm_v512i8_ty     : LLVMType<v512i8>;   // 512 x i8
+def llvm_v256i16_ty    : LLVMType<v256i16>;  // 256 x i16
+def llvm_v128i32_ty    : LLVMType<v128i32>;  // 128 x i32
 
 def llvm_v1i8_ty       : LLVMType<v1i8>;     //  1 x i8
 def llvm_v2i8_ty       : LLVMType<v2i8>;     //  2 x i8
@@ -258,12 +265,19 @@ def llvm_v1i128_ty     : LLVMType<v1i128>;   //  1 x i128
 def llvm_v2f16_ty      : LLVMType<v2f16>;    //  2 x half (__fp16)
 def llvm_v4f16_ty      : LLVMType<v4f16>;    //  4 x half (__fp16)
 def llvm_v8f16_ty      : LLVMType<v8f16>;    //  8 x half (__fp16)
+def llvm_v16f16_ty     : LLVMType<v16f16>;   //  16 x half (__fp16)
+def llvm_v32f16_ty     : LLVMType<v32f16>;   //  32 x half (__fp16)
+def llvm_v64f16_ty     : LLVMType<v64f16>;   //  64 x half (__fp16)
+def llvm_v128f16_ty    : LLVMType<v128f16>;  // 128 x half (__fp16)
+def llvm_v256f16_ty    : LLVMType<v256f16>;  // 256 x half (__fp16)
 def llvm_v1f32_ty      : LLVMType<v1f32>;    //  1 x float
 def llvm_v2f32_ty      : LLVMType<v2f32>;    //  2 x float
 def llvm_v4f32_ty      : LLVMType<v4f32>;    //  4 x float
 def llvm_v8f32_ty      : LLVMType<v8f32>;    //  8 x float
 def llvm_v16f32_ty     : LLVMType<v16f32>;   // 16 x float
 def llvm_v32f32_ty     : LLVMType<v32f32>;   // 32 x float
+def llvm_v64f32_ty     : LLVMType<v64f32>;   // 64 x float
+def llvm_v128f32_ty    : LLVMType<v128f32>;  //128 x float
 def llvm_v1f64_ty      : LLVMType<v1f64>;    //  1 x double
 def llvm_v2f64_ty      : LLVMType<v2f64>;    //  2 x double
 def llvm_v4f64_ty      : LLVMType<v4f64>;    //  4 x double
