@@ -89,6 +89,7 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
 using namespace llvm;
 
 #define DEBUG_TYPE "pipeliner"
@@ -105,8 +106,11 @@ STATISTIC(NumFailNoSchedule, "Pipeliner abort due to no schedule found");
 STATISTIC(NumFailZeroStage, "Pipeliner abort due to zero stage");
 STATISTIC(NumFailLargeMaxStage, "Pipeliner abort due to too many stages");
 
+bool SwpEnabled = true;
 /// A command line option to turn software pipelining on or off.
-static cl::opt<bool> EnableSWP("enable-pipeliner", cl::Hidden, cl::init(true),
+// SANDER cl::location(SwpEnabled) remove it if it's not working
+static cl::opt<bool> EnableSWP("enable-pipeliner", /*cl::location(SwpEnabled) */
+		cl::Hidden, cl::init(true),
                                cl::ZeroOrMore,
                                cl::desc("Enable Software Pipelining"));
 
@@ -184,7 +188,10 @@ bool MachinePipeliner::runOnMachineFunction(MachineFunction &mf) {
   if (skipFunction(mf.getFunction()))
     return false;
 
-  if (!EnableSWP)
+//  if (!EnableSWP)
+//  TODO return EnableSWP and check how to set it to TRUE
+bool SWPEnabled = true;
+  if(!SWPEnabled)
     return false;
 
   if (mf.getFunction().getAttributes().hasAttribute(
@@ -197,10 +204,15 @@ bool MachinePipeliner::runOnMachineFunction(MachineFunction &mf) {
 
   // Cannot pipeline loops without instruction itineraries if we are using
   // DFA for the pipeliner.
+  // mf.getSubtarget().getInstrItineraryData()->isEmpty() == true !
   if (mf.getSubtarget().useDFAforSMS() &&
       (!mf.getSubtarget().getInstrItineraryData() ||
-       mf.getSubtarget().getInstrItineraryData()->isEmpty()))
+       mf.getSubtarget().getInstrItineraryData()->isEmpty())) {
+    
+    std::cout << "We are returning false, because function has empty instritinerarydata \n." ;	
     return false;
+  }
+  std::cout << "Got through the itin check \n";
 
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
@@ -219,6 +231,7 @@ bool MachinePipeliner::runOnMachineFunction(MachineFunction &mf) {
 /// loops, calculates the minimum initiation interval, and attempts to schedule
 /// the loop.
 bool MachinePipeliner::scheduleLoop(MachineLoop &L) {
+  std::cout << "Trying to schedule loop " ; L.dump();
   bool Changed = false;
   for (auto &InnerLoop : L)
     Changed |= scheduleLoop(*InnerLoop);
@@ -235,6 +248,8 @@ bool MachinePipeliner::scheduleLoop(MachineLoop &L) {
 
   setPragmaPipelineOptions(L);
   if (!canPipelineLoop(L)) {
+
+    std::cout << "\n!!! Can not pipeline loop.\n";
     LLVM_DEBUG(dbgs() << "\n!!! Can not pipeline loop.\n");
     return Changed;
   }
@@ -294,11 +309,15 @@ void MachinePipeliner::setPragmaPipelineOptions(MachineLoop &L) {
 /// restricted to loops with a single basic block.  Make sure that the
 /// branch in the loop can be analyzed.
 bool MachinePipeliner::canPipelineLoop(MachineLoop &L) {
-  if (L.getNumBlocks() != 1)
+  if (L.getNumBlocks() != 1) {
+    std::cout << "numblocks not 1 \n";
     return false;
+  }
 
-  if (disabledByPragma)
+  if (disabledByPragma) {
+    std::cout << "disabled by pragma \n";
     return false;
+  }
 
   // Check if the branch can't be understood because we can't do pipelining
   // if that's the case.
@@ -308,6 +327,7 @@ bool MachinePipeliner::canPipelineLoop(MachineLoop &L) {
   if (TII->analyzeBranch(*L.getHeader(), LI.TBB, LI.FBB, LI.BrCond)) {
     LLVM_DEBUG(
         dbgs() << "Unable to analyzeBranch, can NOT pipeline current Loop\n");
+    std::cout << "Unable to analyzeBranch, can NOT pipeline current Loop\n";
     NumFailBranch++;
     return false;
   }
@@ -317,6 +337,7 @@ bool MachinePipeliner::canPipelineLoop(MachineLoop &L) {
   if (TII->analyzeLoop(L, LI.LoopInductionVar, LI.LoopCompare)) {
     LLVM_DEBUG(
         dbgs() << "Unable to analyzeLoop, can NOT pipeline current Loop\n");
+    std::cout << "Unable to analyzeLoop, can NOT pipeline current Loop\n";
     NumFailLoop++;
     return false;
   }
@@ -324,6 +345,7 @@ bool MachinePipeliner::canPipelineLoop(MachineLoop &L) {
   if (!L.getLoopPreheader()) {
     LLVM_DEBUG(
         dbgs() << "Preheader not found, can NOT pipeline current Loop\n");
+    std::cout << "Preheader not found, can NOT pipeline current Loop\n";
     NumFailPreheader++;
     return false;
   }
@@ -390,7 +412,7 @@ bool MachinePipeliner::swingModuloScheduler(MachineLoop &L) {
   SMS.schedule();
   SMS.exitRegion();
 
-  SMS.finishBlock();
+    SMS.finishBlock();
   return SMS.hasNewSchedule();
 }
 
@@ -437,20 +459,25 @@ void SwingSchedulerDAG::schedule() {
   setMII(ResMII, RecMII);
   setMAX_II();
 
+  std::cout << "MII = " << MII << " MAX_II = " << MAX_II
+                    << " (rec=" << RecMII << ", res=" << ResMII << ")\n";
   LLVM_DEBUG(dbgs() << "MII = " << MII << " MAX_II = " << MAX_II
                     << " (rec=" << RecMII << ", res=" << ResMII << ")\n");
-
   // Can't schedule a loop without a valid MII.
   if (MII == 0) {
     LLVM_DEBUG(
         dbgs()
         << "0 is not a valid Minimal Initiation Interval, can NOT schedule\n");
+    std::cout << "0 is not a valid Minimal Initiation Interval, can NOT schedule\n";
     NumFailZeroMII++;
     return;
   }
 
   // Don't pipeline large loops.
   if (SwpMaxMii != -1 && (int)MII > SwpMaxMii) {
+
+	  std::cout << "MII > " << SwpMaxMii
+                      << ", we don't pipleline large loops\n";
     LLVM_DEBUG(dbgs() << "MII > " << SwpMaxMii
                       << ", we don't pipleline large loops\n");
     NumFailLargeMaxMII++;
@@ -494,6 +521,7 @@ void SwingSchedulerDAG::schedule() {
   Scheduled = schedulePipeline(Schedule);
 
   if (!Scheduled){
+	  std::cout << "No schedule found, return\n";
     LLVM_DEBUG(dbgs() << "No schedule found, return\n");
     NumFailNoSchedule++;
     return;
@@ -504,6 +532,7 @@ void SwingSchedulerDAG::schedule() {
   if (numStages == 0) {
     LLVM_DEBUG(
         dbgs() << "No overlapped iterations, no need to generate pipeline\n");
+    std::cout << "No overlapped iterations, no need to generate pipeline\n";
     NumFailZeroStage++;
     return;
   }
@@ -511,6 +540,8 @@ void SwingSchedulerDAG::schedule() {
   if (SwpMaxStages > -1 && (int)numStages > SwpMaxStages) {
     LLVM_DEBUG(dbgs() << "numStages:" << numStages << ">" << SwpMaxStages
                       << " : too many stages, abort\n");
+    std::cout << "numStages:" << numStages << ">" << SwpMaxStages
+                      << " : too many stages, abort\n";
     NumFailLargeMaxStage++;
     return;
   }
