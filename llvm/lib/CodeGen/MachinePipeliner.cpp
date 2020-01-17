@@ -208,8 +208,11 @@ bool SWPEnabled = true;
   if (mf.getSubtarget().useDFAforSMS() &&
       (!mf.getSubtarget().getInstrItineraryData() ||
        mf.getSubtarget().getInstrItineraryData()->isEmpty())) {
-    
-    std::cout << "We are returning false, because function has empty instritinerarydata \n." ;	
+    if(!mf.getSubtarget().getInstrItineraryData()) { 
+      std::cout << "We are returning false, because function has no instritinerarydata \n." ;	
+    } else if(mf.getSubtarget().getInstrItineraryData()->isEmpty()) {
+      std::cout << "We are returning false, because function has empty instritinerarydata \n. ";
+    }
     return false;
   }
   std::cout << "Got through the itin check \n";
