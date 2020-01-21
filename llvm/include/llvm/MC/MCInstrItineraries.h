@@ -17,6 +17,7 @@
 
 #include "llvm/MC/MCSchedule.h"
 #include <algorithm>
+#include <iostream>
 
 namespace llvm {
 
@@ -130,12 +131,14 @@ public:
 
   /// Return the first stage of the itinerary.
   const InstrStage *beginStage(unsigned ItinClassIndx) const {
+    std::cout << "Inside the beginstage. " << std::endl << std::flush;
     unsigned StageIdx = Itineraries[ItinClassIndx].FirstStage;
     return Stages + StageIdx;
   }
 
   /// Return the last+1 stage of the itinerary.
   const InstrStage *endStage(unsigned ItinClassIndx) const {
+    std::cout << "Inside the endstage." << std::endl << std::flush;
     unsigned StageIdx = Itineraries[ItinClassIndx].LastStage;
     return Stages + StageIdx;
   }

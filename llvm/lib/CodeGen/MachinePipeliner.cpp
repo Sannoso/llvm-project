@@ -1046,6 +1046,7 @@ unsigned SwingSchedulerDAG::calculateResMII() {
     });
     for (unsigned C = 0; C < NumCycles; ++C)
       while (RI != RE) {
+	assert(RI != nullptr);
         if ((*RI)->canReserveResources(*MI)) {
           (*RI)->reserveResources(*MI);
           ++ReservedCycles;
@@ -1061,6 +1062,7 @@ unsigned SwingSchedulerDAG::calculateResMII() {
                  << "NewResource created to reserve resources"
                  << "\n");
       ResourceManager *NewResource = new ResourceManager(&MF.getSubtarget());
+      assert(NewResource != nullptr);
       assert(NewResource->canReserveResources(*MI) && "Reserve error.");
       NewResource->reserveResources(*MI);
       Resources.push_back(NewResource);
@@ -4031,8 +4033,10 @@ bool ResourceManager::canReserveResources(const MCInstrDesc *MID) const {
     if (SwpDebugResource)
       dbgs() << "canReserveResources:\n";
   });
-  if (UseDFA)
+  if (UseDFA) {
+	  assert(DFAResources != nullptr);
     return DFAResources->canReserveResources(MID);
+  }
 
   unsigned InsnClass = MID->getSchedClass();
   const MCSchedClassDesc *SCDesc = SM.getSchedClassDesc(InsnClass);

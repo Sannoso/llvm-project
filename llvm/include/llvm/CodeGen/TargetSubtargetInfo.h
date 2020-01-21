@@ -24,7 +24,7 @@
 #include "llvm/Support/CodeGen.h"
 #include <memory>
 #include <vector>
-
+#include <iostream>
 
 namespace llvm {
 
@@ -131,6 +131,7 @@ public:
   /// getInstrItineraryData - Returns instruction itinerary data for the target
   /// or specific subtarget.
   virtual const InstrItineraryData *getInstrItineraryData() const {
+    std::cout << "Getting nullptr as InstrItineraryData from TargetSubtargetInfo.h:135 \n" ;
     return nullptr;
   }
 

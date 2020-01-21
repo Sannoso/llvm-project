@@ -41,6 +41,8 @@
 #include <memory>
 #include <vector>
 
+#include <iostream>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "packets"
@@ -62,7 +64,7 @@ static DFAInput addDFAFuncUnits(DFAInput Inp, unsigned FuncUnits) {
 /// DFAPacketizerEmitter.cpp.
 static DFAInput getDFAInsnInput(const std::vector<unsigned> &InsnClass) {
   DFAInput InsnInput = 0;
-  assert((InsnClass.size() <= DFA_MAX_RESTERMS) &&
+  assert((InsnClass.size() <= DFA_MAX_RESTERMS) && 
          "Exceeded maximum number of DFA terms");
   for (auto U : InsnClass)
     InsnInput = addDFAFuncUnits(InsnInput, U);
@@ -110,9 +112,16 @@ DFAInput DFAPacketizer::getInsnInput(unsigned InsnClass) {
   // Note: this logic must match that in DFAPacketizerDefs.h for input vectors.
   DFAInput InsnInput = 0;
   unsigned i = 0;
-  (void)i;
+  std::cout << "now at the weird line we commented out \n";
+  std::cout << "this is: " << this << std::endl;
+//  (void)i;
+  assert(InstrItins != nullptr);
+  std::cout << InstrItins << std::endl;
   for (const InstrStage *IS = InstrItins->beginStage(InsnClass),
        *IE = InstrItins->endStage(InsnClass); IS != IE; ++IS) {
+    std::cout << "i = " << i << std::endl;
+    assert(IS != nullptr);
+    assert(IE != nullptr);
     InsnInput = addDFAFuncUnits(InsnInput, IS->getUnits());
     assert((i++ < DFA_MAX_RESTERMS) && "Exceeded maximum number of DFA inputs");
   }
@@ -127,7 +136,9 @@ DFAInput DFAPacketizer::getInsnInput(const std::vector<unsigned> &InsnClass) {
 // Check if the resources occupied by a MCInstrDesc are available in the
 // current state.
 bool DFAPacketizer::canReserveResources(const MCInstrDesc *MID) {
+  assert(this != nullptr);
   unsigned InsnClass = MID->getSchedClass();
+  std::cout << "insinclass = " << InsnClass << std::endl;
   DFAInput InsnInput = getInsnInput(InsnClass);
   UnsignPair StateTrans = UnsignPair(CurrentState, InsnInput);
   ReadTable(CurrentState);
