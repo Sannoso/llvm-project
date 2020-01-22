@@ -77,6 +77,8 @@ DFAPacketizer::DFAPacketizer(const InstrItineraryData *I,
                              const DFAStateInput (*SIT)[2],
                              const unsigned *SET):
   InstrItins(I), DFAStateInputTable(SIT), DFAStateEntryTable(SET) {
+  std::cout << "Created DFAPacketizer by constructor. This is = " << this << std::endl;
+  std::cout << "And InstrItineraryData = " << I << std::endl;
   // Make sure DFA types are large enough for the number of terms & resources.
   static_assert((DFA_MAX_RESTERMS * DFA_MAX_RESOURCES) <=
                     (8 * sizeof(DFAInput)),
@@ -114,6 +116,7 @@ DFAInput DFAPacketizer::getInsnInput(unsigned InsnClass) {
   unsigned i = 0;
   std::cout << "now at the weird line we commented out \n";
   std::cout << "this is: " << this << std::endl;
+  std::cout << "InstrItins = " << InstrItins << std::endl;
 //  (void)i;
   assert(InstrItins != nullptr);
   std::cout << InstrItins << std::endl;
@@ -122,7 +125,11 @@ DFAInput DFAPacketizer::getInsnInput(unsigned InsnClass) {
     std::cout << "i = " << i << std::endl;
     assert(IS != nullptr);
     assert(IE != nullptr);
+    std::cout << "IS and IE are no nullpointers, IS = " << IS << std::endl;
+    unsigned x = IS->getUnits();
+    std::cout << "Got IS->getUnits() without crashing and is " << x << std::endl;
     InsnInput = addDFAFuncUnits(InsnInput, IS->getUnits());
+    std::cout << "addDFAFuncUnits succesfully." << std::endl;
     assert((i++ < DFA_MAX_RESTERMS) && "Exceeded maximum number of DFA inputs");
   }
   return InsnInput;
