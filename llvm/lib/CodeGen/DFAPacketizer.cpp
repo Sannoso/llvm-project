@@ -115,11 +115,10 @@ DFAInput DFAPacketizer::getInsnInput(unsigned InsnClass) {
   DFAInput InsnInput = 0;
   unsigned i = 0;
   std::cout << "now at the weird line we commented out \n";
-  std::cout << "this is: " << this << std::endl;
+  std::cout << "DFAPacketizer, this = " << this << std::endl;
   std::cout << "InstrItins = " << InstrItins << std::endl;
-//  (void)i;
+  (void)i;
   assert(InstrItins != nullptr);
-  std::cout << InstrItins << std::endl;
   for (const InstrStage *IS = InstrItins->beginStage(InsnClass),
        *IE = InstrItins->endStage(InsnClass); IS != IE; ++IS) {
     std::cout << "i = " << i << std::endl;
@@ -145,7 +144,7 @@ DFAInput DFAPacketizer::getInsnInput(const std::vector<unsigned> &InsnClass) {
 bool DFAPacketizer::canReserveResources(const MCInstrDesc *MID) {
   assert(this != nullptr);
   unsigned InsnClass = MID->getSchedClass();
-  std::cout << "insinclass = " << InsnClass << std::endl;
+  std::cout << "Can DFAPAcketizer::reserverResources, this = " << this << ": -> insinclass = " << InsnClass << std::endl;
   DFAInput InsnInput = getInsnInput(InsnClass);
   UnsignPair StateTrans = UnsignPair(CurrentState, InsnInput);
   ReadTable(CurrentState);

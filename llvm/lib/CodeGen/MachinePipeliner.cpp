@@ -222,9 +222,16 @@ bool SWPEnabled = true;
   MDT = &getAnalysis<MachineDominatorTree>();
   TII = MF->getSubtarget().getInstrInfo();
   RegClassInfo.runOnMachineFunction(*MF);
-
-  for (auto &L : *MLI)
+  int i = 0;
+  for (auto &L : *MLI) {
+    std::cout << "Machinepipeliner starting scheduling loop number" << i << std::endl;
+    std::cout << "loopdump before : " << std::endl;
+    L->dump();
     scheduleLoop(*L);
+    std::cout << "Loop scheduled. Now looks like this : " << std::endl;
+    L->dump();
+    i++;
+  }
 
   return false;
 }

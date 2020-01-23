@@ -131,20 +131,20 @@ public:
 
   /// Return the first stage of the itinerary.
   const InstrStage *beginStage(unsigned ItinClassIndx) const {
-    std::cout << "Inside the beginstage. " << std::endl;
+//    std::cout << "Inside the beginstage. " << std::endl;
     unsigned StageIdx = Itineraries[ItinClassIndx].FirstStage;
-    std::cout << "However we are outputting garbage." << std::endl;
+//    std::cout << "However we are outputting garbage." << std::endl;
     if(Stages == nullptr) {
 	std::cout << "Stages = a nullpointer" << std::endl;
     }
-    std::cout << "This = " << this << std::endl;
-    std::cout << "Stages = " << Stages << std::endl;
+    std::cout << "InstrItineraryData::beginstage -> instritindata = " << this << std::endl;
+    std::cout << "instritindata.Stages = " << Stages << std::endl;
     return Stages + StageIdx;
   }
 
   /// Return the last+1 stage of the itinerary.
   const InstrStage *endStage(unsigned ItinClassIndx) const {
-    std::cout << "Inside the endstage." << std::endl << std::flush;
+//    std::cout << "Inside the endstage." << std::endl << std::flush;
     unsigned StageIdx = Itineraries[ItinClassIndx].LastStage;
     return Stages + StageIdx;
   }
