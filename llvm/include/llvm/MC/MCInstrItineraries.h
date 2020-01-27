@@ -137,8 +137,8 @@ public:
     if(Stages == nullptr) {
 	std::cout << "Stages = a nullpointer" << std::endl;
     }
-    std::cout << "InstrItineraryData::beginstage -> instritindata = " << this << std::endl;
-    std::cout << "instritindata.Stages = " << Stages << std::endl;
+//    std::cout << "InstrItineraryData::beginstage -> instritindata = " << this << std::endl;
+//    std::cout << "instritindata.Stages = " << Stages << std::endl;
     return Stages + StageIdx;
   }
 

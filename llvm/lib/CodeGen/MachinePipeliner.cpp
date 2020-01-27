@@ -215,7 +215,7 @@ bool SWPEnabled = true;
     }
     return false;
   }
-  std::cout << "Got through the itin check \n";
+//  std::cout << "Got through the itin check for a function\n";
 
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
@@ -225,11 +225,11 @@ bool SWPEnabled = true;
   int i = 0;
   for (auto &L : *MLI) {
     std::cout << "Machinepipeliner starting scheduling loop number" << i << std::endl;
-    std::cout << "loopdump before : " << std::endl;
-    L->dump();
+//    std::cout << "loopdump before : " << std::endl;
+//    L->dump();
     scheduleLoop(*L);
-    std::cout << "Loop scheduled. Now looks like this : " << std::endl;
-    L->dump();
+//    std::cout << "Loop scheduled. Now looks like this : " << std::endl;
+//    L->dump();
     i++;
   }
 
@@ -241,7 +241,7 @@ bool SWPEnabled = true;
 /// loops, calculates the minimum initiation interval, and attempts to schedule
 /// the loop.
 bool MachinePipeliner::scheduleLoop(MachineLoop &L) {
-  std::cout << "Trying to schedule loop " ; L.dump();
+//  std::cout << "Trying to schedule loop " ; L.dump();
   bool Changed = false;
   for (auto &InnerLoop : L)
     Changed |= scheduleLoop(*InnerLoop);

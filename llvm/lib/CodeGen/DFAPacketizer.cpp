@@ -114,9 +114,9 @@ DFAInput DFAPacketizer::getInsnInput(unsigned InsnClass) {
   // Note: this logic must match that in DFAPacketizerDefs.h for input vectors.
   DFAInput InsnInput = 0;
   unsigned i = 0;
-  std::cout << "now at the weird line we commented out \n";
-  std::cout << "DFAPacketizer, this = " << this << std::endl;
-  std::cout << "InstrItins = " << InstrItins << std::endl;
+//  std::cout << "now at the weird line we commented out \n";
+//  std::cout << "DFAPacketizer, this = " << this << std::endl;
+//  std::cout << "InstrItins = " << InstrItins << std::endl;
   (void)i;
   assert(InstrItins != nullptr);
   for (const InstrStage *IS = InstrItins->beginStage(InsnClass),
