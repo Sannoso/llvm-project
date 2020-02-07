@@ -1413,11 +1413,20 @@ void SwingSchedulerDAG::computeNodeFunctions(NodeSetType &NodeSets) {
          IS != ES; ++IS) {
       SUnit *succ = IS->getSUnit();
       if (IS->getLatency() == 0)
-        zeroLatencyHeight =
+	{
+//	  std::cout << "succ->NodeNum = " << succ->NodeNum << std::endl;
+	  if(succ->isBoundaryNode()) {
+	    std::cout << "succ = boundary node" << std::endl;
+	  } else {
+//	    std::cout << "succ != boundary node " << std::endl;
+        zeroLatencyHeight = 
             std::max(zeroLatencyHeight, getZeroLatencyHeight(succ) + 1);
+	  }
+	}
       if (ignoreDependence(*IS, true))
         continue;
-      alap = std::min(alap, (int)(getALAP(succ) - IS->getLatency() +
+      if(!succ->isBoundaryNode())
+        alap = std::min(alap, (int)(getALAP(succ) - IS->getLatency() +
                                   getDistance(SU, succ, *IS) * MII));
     }
 
@@ -1858,6 +1867,7 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
         while (!R.empty()) {
           SUnit *maxHeight = nullptr;
           for (SUnit *I : R) {
+//	    if(!I->isBoundaryNode()) {
             if (maxHeight == nullptr || getHeight(I) > getHeight(maxHeight))
               maxHeight = I;
             else if (getHeight(I) == getHeight(maxHeight) &&
@@ -1868,9 +1878,14 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
                          getZeroLatencyHeight(maxHeight) &&
                      getMOV(I) < getMOV(maxHeight))
               maxHeight = I;
-          }
+//            }
+	  }
           NodeOrder.insert(maxHeight);
+	  if(maxHeight->isBoundaryNode()) {
+	    std::cout << "We have a boundary node, so llvmdebug message: " << std::endl;
+	  } else {
           LLVM_DEBUG(dbgs() << maxHeight->NodeNum << " ");
+	  }
           R.remove(maxHeight);
           for (const auto &I : maxHeight->Succs) {
             if (Nodes.count(I.getSUnit()) == 0)
@@ -2202,6 +2217,11 @@ void SwingSchedulerDAG::generateProlog(SMSchedule &Schedule, unsigned LastStage,
   if (numBranches) {
     SmallVector<MachineOperand, 0> Cond;
     TII->insertBranch(*PreheaderBB, PrologBBs[0], nullptr, Cond, DebugLoc());
+    std::cout << "Inserted branch in prolog: " << std::endl;
+    std::cout << "PreheaderBB = " << std::endl;
+    PreheaderBB->dump();
+    std::cout << "PrologBB = " << std::endl;
+    PrologBBs[0]->dump();
   }
 }
 
@@ -2290,11 +2310,13 @@ void SwingSchedulerDAG::generateEpilog(SMSchedule &Schedule, unsigned LastStage,
   // Create a branch to the new epilog from the kernel.
   // Remove the original branch and add a new branch to the epilog.
   TII->removeBranch(*KernelBB);
+  //add print Sander
   TII->insertBranch(*KernelBB, KernelBB, EpilogStart, Cond, DebugLoc());
   // Add a branch to the loop exit.
   if (EpilogBBs.size() > 0) {
     MachineBasicBlock *LastEpilogBB = EpilogBBs.back();
     SmallVector<MachineOperand, 4> Cond1;
+    //add prints at all insertbranch things sander
     TII->insertBranch(*LastEpilogBB, LoopExitBB, nullptr, Cond1, DebugLoc());
   }
 }

@@ -29,6 +29,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 namespace llvm {
 
 template<class Graph> class GraphWriter;
@@ -312,7 +314,11 @@ class TargetRegisterInfo;
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),
         isUnbuffered(false), hasReservedResource(false), isDepthCurrent(false),
-        isHeightCurrent(false) {}
+        isHeightCurrent(false) {
+	assert(!isBoundaryNode());
+	if(!isBoundaryNode())
+	std::cout << "Is not a boundary node. constructor 1" << std::endl;
+	}
 
     /// Constructs an SUnit for post-regalloc scheduling to represent a
     /// MachineInstr.
@@ -323,7 +329,11 @@ class TargetRegisterInfo;
         isPending(false), isAvailable(false), isScheduled(false),
         isScheduleHigh(false), isScheduleLow(false), isCloned(false),
         isUnbuffered(false), hasReservedResource(false), isDepthCurrent(false),
-        isHeightCurrent(false) {}
+        isHeightCurrent(false) {
+	assert(!isBoundaryNode());
+	if(!isBoundaryNode())
+	std::cout << "Is not a boundary node. constructor 2" << std::endl;
+	}
 
     /// Constructs a placeholder SUnit.
     SUnit()
@@ -332,7 +342,11 @@ class TargetRegisterInfo;
         hasPhysRegClobbers(false), isPending(false), isAvailable(false),
         isScheduled(false), isScheduleHigh(false), isScheduleLow(false),
         isCloned(false), isUnbuffered(false), hasReservedResource(false),
-        isDepthCurrent(false), isHeightCurrent(false) {}
+        isDepthCurrent(false), isHeightCurrent(false) {
+	assert(!isBoundaryNode());
+	if(!isBoundaryNode())
+	std::cout << "Is not a boundary node. constructor 3" << std::endl;
+	}
 
     /// Boundary nodes are placeholders for the boundary of the
     /// scheduling region.
