@@ -48,6 +48,8 @@
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/InitializePasses.h"
 
+#include <iostream>
+
 namespace llvm {
 
 class NodeSet;
@@ -237,7 +239,13 @@ public:
   /// The maximum unweighted length of a path from the given node to an
   /// arbitrary node in which each edge has latency 0
   int getZeroLatencyHeight(SUnit *Node) {
-    return ScheduleInfo[Node->NodeNum].ZeroLatencyHeight;
+    if(Node == nullptr) {
+	std::cout << "Node SUnit = nullptr!" << std::endl;
+        return 0;
+    } else {
+	std::cout << "SUnit is not a nullpointer, and array index Node->NodeNum = " << Node->NodeNum << std::endl;
+        return ScheduleInfo[Node->NodeNum].ZeroLatencyHeight;
+    }
   }
 
   /// Return true if the dependence is a back-edge in the data dependence graph.

@@ -90,6 +90,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "pipeliner"
@@ -193,11 +195,14 @@ INITIALIZE_PASS_END(MachinePipeliner, DEBUG_TYPE,
 
 /// The "main" function for implementing Swing Modulo Scheduling.
 bool MachinePipeliner::runOnMachineFunction(MachineFunction &mf) {
+  std::cout << "in RunOnMachineFunction : 196" << std::endl;
   if (skipFunction(mf.getFunction()))
     return false;
 
-  if (!EnableSWP)
+  if (!EnableSWP) {
     return false;
+    std::cout << "SWP not enabled" << std::endl;
+  }
 
   if (mf.getFunction().getAttributes().hasAttribute(
           AttributeList::FunctionIndex, Attribute::OptimizeForSize) &&
@@ -211,8 +216,14 @@ bool MachinePipeliner::runOnMachineFunction(MachineFunction &mf) {
   // DFA for the pipeliner.
   if (mf.getSubtarget().useDFAforSMS() &&
       (!mf.getSubtarget().getInstrItineraryData() ||
-       mf.getSubtarget().getInstrItineraryData()->isEmpty()))
+       mf.getSubtarget().getInstrItineraryData()->isEmpty())) {
+    if(!mf.getSubtarget().getInstrItineraryData()) {
+	std::cout << "No SWP because instr itinerary data doesn't exist" << std::endl;
+    } else {
+        std::cout << "No SWP because itinerary data is empty" << std::endl;
+    }
     return false;
+  }
 
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
@@ -1363,7 +1374,8 @@ static bool ignoreDependence(const SDep &D, bool isPred) {
 ///  H - Height of each node.
 void SwingSchedulerDAG::computeNodeFunctions(NodeSetType &NodeSets) {
   ScheduleInfo.resize(SUnits.size());
-
+  std::cout << "Made a scheduleinfo of size " << ScheduleInfo.size() << std::endl;
+    
   LLVM_DEBUG({
     for (ScheduleDAGTopologicalSort::const_iterator I = Topo.begin(),
                                                     E = Topo.end();
@@ -1385,11 +1397,11 @@ void SwingSchedulerDAG::computeNodeFunctions(NodeSetType &NodeSets) {
                                     EP = SU->Preds.end();
          IP != EP; ++IP) {
       SUnit *pred = IP->getSUnit();
+      if (ignoreDependence(*IP, true))
+        continue;
       if (IP->getLatency() == 0)
         zeroLatencyDepth =
             std::max(zeroLatencyDepth, getZeroLatencyDepth(pred) + 1);
-      if (ignoreDependence(*IP, true))
-        continue;
       asap = std::max(asap, (int)(getASAP(pred) + IP->getLatency() -
                                   getDistance(pred, SU, *IP) * MII));
     }
@@ -1409,13 +1421,22 @@ void SwingSchedulerDAG::computeNodeFunctions(NodeSetType &NodeSets) {
                                     ES = SU->Succs.end();
          IS != ES; ++IS) {
       SUnit *succ = IS->getSUnit();
-      if (IS->getLatency() == 0)
+      if (ignoreDependence(*IS, true))
+          continue;
+      if (IS->getLatency() == 0) {
+	if(succ->NodeNum >= SUnits.size()) {
+	    std::cout << "1428: succ has invalid value of " << succ << "and schedulesize = " << ScheduleInfo.size() << std::endl;
+	    std::cout << "Hardcoded it to stay the same. which is " << zeroLatencyHeight << std::endl;
+
+	    std::cout << "Also let alap be the same as before: " << alap << std::endl;
+	} else {
+	    std::cout << "1431: zeroLatencyHeight = " << zeroLatencyHeight << "and scheduleinfo zerolatencyheight = " << getZeroLatencyHeight(succ) << std::endl; 
         zeroLatencyHeight =
             std::max(zeroLatencyHeight, getZeroLatencyHeight(succ) + 1);
-      if (ignoreDependence(*IS, true))
-        continue;
-      alap = std::min(alap, (int)(getALAP(succ) - IS->getLatency() +
+        alap = std::min(alap, (int)(getALAP(succ) - IS->getLatency() +
                                   getDistance(SU, succ, *IS) * MII));
+	}
+      }
     }
 
     ScheduleInfo[*I].ALAP = alap;
