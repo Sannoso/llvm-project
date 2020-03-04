@@ -35,8 +35,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
-
-#include <iostream>
 using namespace llvm;
 
 #define DEBUG_TYPE "codegen"
@@ -1364,9 +1362,6 @@ MachineBasicBlock::getProbabilityIterator(
     MachineBasicBlock::const_succ_iterator I) const {
   assert(Probs.size() == Successors.size() && "Async probability list!");
   const size_t index = std::distance(Successors.begin(), I);
-  if(index >= Probs.size()) {
-     std::cout << "Crashing now: index = " << index << "and Probs.size() = " << Probs.size() << std::endl;
-  }
   assert(index < Probs.size() && "Not a current successor!");
   return Probs.begin() + index;
 }

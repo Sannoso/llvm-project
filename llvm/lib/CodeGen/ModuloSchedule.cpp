@@ -19,8 +19,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include <iostream>
-
 #define DEBUG_TYPE "pipeliner"
 using namespace llvm;
 
@@ -258,11 +256,9 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
   bool checkBranch = TII->analyzeBranch(*KernelBB, TBB, FBB, Cond);
-//  bool checkBranch = TII->analyzeBranch(*KernelBB, TBB, FBB, Cond);
   assert(!checkBranch && "generateEpilog must be able to analyze the branch");
   if (checkBranch)
     return;
-
 
   MachineBasicBlock::succ_iterator LoopExitI = KernelBB->succ_begin();
   if (*LoopExitI == KernelBB)
@@ -272,8 +268,6 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
 
   MachineBasicBlock *PredBB = KernelBB;
   MachineBasicBlock *EpilogStart = LoopExitBB;
-  std::cout << "loopexit = " << std::endl;
-  LoopExitBB->dump();
   InstrMapTy InstrMap;
 
   // Generate a basic block for each stage, not including the last stage,
@@ -327,10 +321,8 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
   // Remove the original branch and add a new branch to the epilog.
   TII->removeBranch(*KernelBB);
   if(LoopExitBB == TBB) {
-    std::cout << "KernelBB swapping TBB and FBB operand" << std::endl;
     TII->insertBranch(*KernelBB, EpilogStart, KernelBB, Cond, DebugLoc());
   } else {
-    std::cout << "KernelBB not swapping. correct assumption" << std::endl;
     TII->insertBranch(*KernelBB, KernelBB, EpilogStart, Cond, DebugLoc());
   }
   // Add a branch to the loop exit.
