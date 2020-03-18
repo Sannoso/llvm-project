@@ -1858,6 +1858,8 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
         while (!R.empty()) {
           SUnit *maxHeight = nullptr;
           for (SUnit *I : R) {
+	    if (I->isBoundaryNode())
+		continue;
             if (maxHeight == nullptr || getHeight(I) > getHeight(maxHeight))
               maxHeight = I;
             else if (getHeight(I) == getHeight(maxHeight) &&
@@ -1869,6 +1871,10 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
                      getMOV(I) < getMOV(maxHeight))
               maxHeight = I;
           }
+
+	  if(maxHeight == nullptr) {
+	    maxHeight = *R.begin();
+	  }
           NodeOrder.insert(maxHeight);
           LLVM_DEBUG(dbgs() << maxHeight->NodeNum << " ");
           R.remove(maxHeight);

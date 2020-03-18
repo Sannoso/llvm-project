@@ -65,6 +65,7 @@
 #include <numeric>
 #include <vector>
 
+#include <iostream>
 using namespace llvm;
 
 #define DEBUG_TYPE "branch-folder"
@@ -186,6 +187,11 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
                                     MachineModuleInfo *mmi,
                                     MachineLoopInfo *mli, bool AfterPlacement) {
   if (!tii) return false;
+  std::cout << "starting branchfolding " << std::endl;
+  for (MachineBasicBlock &MBB : MF) {
+    std::cout << &MBB << std::endl;
+    MBB.dump();
+  }
 
   TriedMerging.clear();
 
@@ -1481,7 +1487,11 @@ ReoptimizeBlock:
     if (PriorFBB == MBB) {
       DebugLoc dl = getBranchDebugLoc(PrevBB);
       TII->removeBranch(PrevBB);
+
+//this one is building false branch in this one case.
       TII->insertBranch(PrevBB, PriorTBB, nullptr, PriorCond, dl);
+
+
       MadeChange = true;
       ++NumBranchOpts;
       goto ReoptimizeBlock;

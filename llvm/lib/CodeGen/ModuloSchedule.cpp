@@ -19,6 +19,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <iostream>
+
 #define DEBUG_TYPE "pipeliner"
 using namespace llvm;
 
@@ -274,6 +276,8 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
   // which was generated for the kernel.  Each basic block may contain
   // instructions from multiple stages/iterations.
   int EpilogStage = LastStage + 1;
+  std::cout << "laststage = " << LastStage << std::endl;
+  BB->dump();
   for (unsigned i = LastStage; i >= 1; --i, ++EpilogStage) {
     MachineBasicBlock *NewBB = MF.CreateMachineBasicBlock();
     EpilogBBs.push_back(NewBB);
@@ -282,9 +286,15 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
     PredBB->replaceSuccessor(LoopExitBB, NewBB);
     NewBB->addSuccessor(LoopExitBB);
 
-    if (EpilogStart == LoopExitBB)
+    if (EpilogStart == LoopExitBB) {
       EpilogStart = NewBB;
-
+      std::cout << "epilogstart will be newbb" << std::endl;
+      std::cout << "and number is " << EpilogStart->getNumber() << std::endl;
+    } else {
+      std::cout << "epilogstart will not be newbb" << std::endl;
+      std::cout << "and number is " << EpilogStart->getNumber() << std::endl;
+    }
+    std::cout << "generating epilog. dump instructions" << std::endl;
     // Add instructions to the epilog depending on the current block.
     // Process instructions in original program order.
     for (unsigned StageNum = i; StageNum <= LastStage; ++StageNum) {
@@ -295,9 +305,15 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
         if ((unsigned)Schedule.getStage(In) == StageNum) {
           // Instructions with memoperands in the epilog are updated with
           // conservative values.
+	  if(In->isBranch()) {
+	    std::cout << "Not copying branch instruction to our epilog" << std::endl;
+	    In->dump();
+	    continue;
+	  }
           MachineInstr *NewMI = cloneInstr(In, UINT_MAX, 0);
           updateInstruction(NewMI, i == 1, EpilogStage, 0, VRMap);
           NewBB->push_back(NewMI);
+	  NewMI->dump();
           InstrMap[NewMI] = In;
         }
       }
@@ -705,6 +721,7 @@ void ModuloScheduleExpander::generatePhis(
 /// no uses, or uses that occur in the original loop only.
 void ModuloScheduleExpander::removeDeadInstructions(MachineBasicBlock *KernelBB,
                                                     MBBVectorTy &EpilogBBs) {
+  std::cout << "Starting removing dead instructions" << std::endl;
   // For each epilog block, check that the value defined by each instruction
   // is used.  If not, delete it.
   for (MBBVectorTy::reverse_iterator MBB = EpilogBBs.rbegin(),
@@ -756,6 +773,8 @@ void ModuloScheduleExpander::removeDeadInstructions(MachineBasicBlock *KernelBB,
         used = false;
       }
       if (!used) {
+	std::cout << "removing instr " << std::endl;
+	MI->dump();
         LIS.RemoveMachineInstrFromMaps(*MI);
         MI++->eraseFromParent();
         continue;
@@ -771,10 +790,13 @@ void ModuloScheduleExpander::removeDeadInstructions(MachineBasicBlock *KernelBB,
     ++BBI;
     Register reg = MI->getOperand(0).getReg();
     if (MRI.use_begin(reg) == MRI.use_end()) {
+      std::cout << "removing other instr " << std::endl;
+      MI->dump();
       LIS.RemoveMachineInstrFromMaps(*MI);
       MI->eraseFromParent();
     }
   }
+  std::cout << "end of remove dead instructions" << std::endl;
 }
 
 /// For loop carried definitions, we split the lifetime of a virtual register
