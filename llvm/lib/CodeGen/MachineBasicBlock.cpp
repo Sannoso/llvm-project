@@ -35,6 +35,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
+
+#include <iostream>
 using namespace llvm;
 
 #define DEBUG_TYPE "codegen"
@@ -1326,7 +1328,7 @@ MachineBasicBlock::findBranchDebugLoc() {
 
 /// Return probability of the edge from this block to MBB.
 BranchProbability
-MachineBasicBlock::getSuccProbability(const_succ_iterator Succ) const {
+MachineBasicBlock::getSuccProbability(const_succ_iterator Succ) const { //TODO sander. crashing in here...
   if (Probs.empty())
     return BranchProbability(1, succ_size());
 
@@ -1362,7 +1364,11 @@ MachineBasicBlock::getProbabilityIterator(
     MachineBasicBlock::const_succ_iterator I) const {
   assert(Probs.size() == Successors.size() && "Async probability list!");
   const size_t index = std::distance(Successors.begin(), I);
-  assert(index < Probs.size() && "Not a current successor!");
+  if(index >= Probs.size()) {
+     std::cout <<  "index = " << index << " probs.size = " << Probs.size() << " and mbb = " << std::endl;
+     dump();
+  }
+  assert(index < Probs.size() && "Not a current successor!"); //so what to do now?
   return Probs.begin() + index;
 }
 

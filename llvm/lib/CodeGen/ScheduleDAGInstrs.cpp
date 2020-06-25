@@ -562,7 +562,7 @@ void ScheduleDAGInstrs::addChainDependency (SUnit *SUa, SUnit *SUb,
 ///
 /// MachineScheduler relies on initSUnits numbering the nodes by their order in
 /// the original instruction list.
-void ScheduleDAGInstrs::initSUnits() {
+void ScheduleDAGInstrs::initSUnits() { //TODO sander. Is this where we start breaking stuff with boundary nodes?
   // We'll be allocating one SUnit for each real instruction in the region,
   // which is contained within a basic block.
   SUnits.reserve(NumRegionInstrs);

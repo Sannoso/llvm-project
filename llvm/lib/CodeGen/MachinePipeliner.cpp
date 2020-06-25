@@ -90,6 +90,7 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
 using namespace llvm;
 
 #define DEBUG_TYPE "pipeliner"
@@ -397,8 +398,21 @@ bool MachinePipeliner::swingModuloScheduler(MachineLoop &L) {
                                    E = MBB->instr_end();
        I != E; ++I, --size)
     ;
-
+/*
+  std::cout << "\n\n\n\n Let's check if the scheduling region is okay. This BB has size " << size << std::endl;
+  MBB->dump();
+//  std::cout << "Is this the first terminator? " << std::endl;
+//  MachineInstr bla = &MBB->getFirstTerminator();
+  auto I = MBB->getFirstTerminator();
+  I->dump();
+  //try this
+//  MachineBasicBlock::iterator I = MBB->getFirstTerminator();
+//  MachineInstr bla = *I;
+//  bla.dump();
+  std::cout << "\n\n\n\n" << std::endl; 
+  */
   SMS.enterRegion(MBB, MBB->begin(), MBB->getFirstTerminator(), size);
+//  SMS.enterRegion(MBB, MBB->begin(), I, size);
   SMS.schedule();
   SMS.exitRegion();
 
@@ -1160,7 +1174,9 @@ void SwingSchedulerDAG::Circuits::createAdjacencyStructure(
       }
       // Do not process a boundary node, an artificial node.
       // A back-edge is processed only if it goes to a Phi.
+      // TODO sander. let's try this, with putting boundary nodes in here.
       if (SI.getSUnit()->isBoundaryNode() || SI.isArtificial() ||
+      //if (SI.isArtificial() || nope nope this is not it. it crashes now at findcircuits.
           (SI.getKind() == SDep::Anti && !SI.getSUnit()->getInstr()->isPHI()))
         continue;
       int N = SI.getSUnit()->NodeNum;
@@ -1399,8 +1415,8 @@ void SwingSchedulerDAG::computeNodeFunctions(NodeSetType &NodeSets) {
   }
 
   // Compute ALAP, ZeroLatencyHeight, and MOV.
-  for (ScheduleDAGTopologicalSort::const_reverse_iterator I = Topo.rbegin(),
-                                                          E = Topo.rend();
+  for (ScheduleDAGTopologicalSort::const_reverse_iterator I = Topo.rbegin(), // is this rbegin, rend the problem?
+                                                          E = Topo.rend(); // does this include bounday node?
        I != E; ++I) {
     int alap = maxASAP;
     int zeroLatencyHeight = 0;
@@ -1855,12 +1871,19 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
         // Choose the node with the maximum height.  If more than one, choose
         // the node wiTH the maximum ZeroLatencyHeight. If still more than one,
         // choose the node with the lowest MOV.
-        while (!R.empty()) {
+        while (!R.empty()) { //TODO sander, this loop is what needs to be fixed.
           SUnit *maxHeight = nullptr;
           for (SUnit *I : R) {
-            if (maxHeight == nullptr || getHeight(I) > getHeight(maxHeight))
+            if (maxHeight == nullptr || getHeight(I) > getHeight(maxHeight)) {
               maxHeight = I;
-            else if (getHeight(I) == getHeight(maxHeight) &&
+	      if(maxHeight->isBoundaryNode()) {
+		std::cout << "yup, just made a boundary node that maxheight" << std::endl;
+		return; //how about this, we can't schedule this anyway.
+	      }
+	    }
+            else if (I->isBoundaryNode())
+	      continue;
+	    else if (getHeight(I) == getHeight(maxHeight) &&
                      getZeroLatencyHeight(I) > getZeroLatencyHeight(maxHeight))
               maxHeight = I;
             else if (getHeight(I) == getHeight(maxHeight) &&
@@ -1970,6 +1993,7 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
 
   bool scheduleFound = false;
   unsigned II = 0;
+  std::cout << "scheduling now. minII = " << MII << " and max_II = " << MAX_II << std::endl;
   // Keep increasing II until a valid schedule is found.
   for (II = MII; II <= MAX_II && !scheduleFound; ++II) {
     Schedule.reset();
@@ -1980,7 +2004,6 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
     SetVector<SUnit *>::iterator NE = NodeOrder.end();
     do {
       SUnit *SU = *NI;
-
       // Compute the schedule time for the instruction, which is based
       // upon the scheduled time for any predecessors/successors.
       int EarlyStart = INT_MIN;
@@ -1989,6 +2012,12 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
       // due to chain dependences.
       int SchedEnd = INT_MAX;
       int SchedStart = INT_MIN;
+      if(SU->getInstr()->isBranch()) { //Sander this is a fix for the branch stage problem
+	std::cout << "found branch " << std::endl;
+	SchedEnd = II-1;
+      }
+
+
       Schedule.computeStart(SU, &EarlyStart, &LateStart, &SchedEnd, &SchedStart,
                             II, this);
       LLVM_DEBUG({
@@ -2033,6 +2062,10 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
             Schedule.getMaxStageCount() > (unsigned)SwpMaxStages)
           scheduleFound = false;
 
+      if(!scheduleFound) {
+	      std::cout << "II = " << II << ": can't schedule instruction: " << std::endl;
+	      SU->getInstr()->dump();
+      }
       LLVM_DEBUG({
         if (!scheduleFound)
           dbgs() << "\tCan't schedule\n";
@@ -2051,7 +2084,9 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
     Schedule.finalizeSchedule(this);
   else
     Schedule.reset();
-
+  if(scheduleFound && Schedule.getMaxStageCount() == 0) {
+    std::cout << "schedule found, but not possible to software pipeline. II = " << II << std::endl;
+  }
   return scheduleFound && Schedule.getMaxStageCount() > 0;
 }
 

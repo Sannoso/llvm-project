@@ -19,6 +19,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <iostream>
+
 #define DEBUG_TYPE "pipeliner"
 using namespace llvm;
 
@@ -232,7 +234,9 @@ void ModuloScheduleExpander::generateProlog(unsigned LastStage,
     });
   }
 
-  PredBB->replaceSuccessor(BB, KernelBB);
+  //TODO here is the moduloscheduler breaking!
+//  if(BB->getNumber() != 1 && KernelBB->getNumber() != -1) // quickfix?
+    PredBB->replaceSuccessor(BB, KernelBB);
 
   // Check if we need to remove the branch from the preheader to the original
   // loop, and replace it with a branch to the new loop.
@@ -241,6 +245,8 @@ void ModuloScheduleExpander::generateProlog(unsigned LastStage,
     SmallVector<MachineOperand, 0> Cond;
     TII->insertBranch(*Preheader, PrologBBs[0], nullptr, Cond, DebugLoc());
   }
+  std::cout << "this is our prolog" << std::endl;
+  PrologBBs[0]->dump();
 }
 
 /// Generate the pipeline epilog code. The epilog code finishes the iterations
@@ -292,11 +298,11 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
         if (BBI.isPHI())
           continue;
         MachineInstr *In = &BBI;
-        if ((unsigned)Schedule.getStage(In) == StageNum) {
+	if(!In->isBranch() && (unsigned)Schedule.getStage(In) == StageNum) { //TODO is this correct
           // Instructions with memoperands in the epilog are updated with
           // conservative values.
           MachineInstr *NewMI = cloneInstr(In, UINT_MAX, 0);
-          updateInstruction(NewMI, i == 1, EpilogStage, 0, VRMap);
+	  updateInstruction(NewMI, i == 1, EpilogStage, 0, VRMap);
           NewBB->push_back(NewMI);
           InstrMap[NewMI] = In;
         }
@@ -325,12 +331,19 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
   } else {
     TII->insertBranch(*KernelBB, KernelBB, EpilogStart, Cond, DebugLoc());
   }
+  
+  
   // Add a branch to the loop exit.
   if (EpilogBBs.size() > 0) {
+    TII->removeBranch(*EpilogStart);
     MachineBasicBlock *LastEpilogBB = EpilogBBs.back();
     SmallVector<MachineOperand, 4> Cond1;
     TII->insertBranch(*LastEpilogBB, LoopExitBB, nullptr, Cond1, DebugLoc());
   }
+  std::cout << "generated epilog. This is our new KernelBB" << std::endl;
+  KernelBB->dump();
+  std::cout << "and this is our generated epilog " << std::endl;
+  EpilogStart->dump();
 }
 
 /// Replace all uses of FromReg that appear outside the specified
@@ -2155,8 +2168,11 @@ void ModuloScheduleTest::runOnLoop(MachineFunction &MF, MachineLoop &L) {
   DenseMap<MachineInstr *, int> Cycle, Stage;
   std::vector<MachineInstr *> Instrs;
   for (MachineInstr &MI : *BB) {
-    if (MI.isTerminator())
+    if (MI.isTerminator()) {
+      std::cout << "MI is terminator " << std::endl;
+      MI.dump();
       continue;
+    }
     Instrs.push_back(&MI);
     if (MCSymbol *Sym = MI.getPostInstrSymbol()) {
       dbgs() << "Parsing post-instr symbol for " << MI;
