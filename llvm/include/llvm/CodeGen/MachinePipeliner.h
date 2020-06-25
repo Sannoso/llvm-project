@@ -237,7 +237,11 @@ public:
   /// The maximum unweighted length of a path from the given node to an
   /// arbitrary node in which each edge has latency 0
   int getZeroLatencyHeight(SUnit *Node) {
-    return ScheduleInfo[Node->NodeNum].ZeroLatencyHeight;
+    if (Node->isBoundaryNode()) {
+	return 0; // ZLH of boundary node is always 0.
+    } else {
+        return ScheduleInfo[Node->NodeNum].ZeroLatencyHeight;
+    }
   }
 
   /// Return true if the dependence is a back-edge in the data dependence graph.

@@ -1858,9 +1858,15 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
         while (!R.empty()) {
           SUnit *maxHeight = nullptr;
           for (SUnit *I : R) {
-            if (maxHeight == nullptr || getHeight(I) > getHeight(maxHeight))
+            if (maxHeight == nullptr || getHeight(I) > getHeight(maxHeight)) {
               maxHeight = I;
-            else if (getHeight(I) == getHeight(maxHeight) &&
+	      if(maxHeight->isBoundaryNode()) {
+		return;
+	      }
+	    }
+            else if (I->isBoundaryNode())
+	      continue;
+	    else if (getHeight(I) == getHeight(maxHeight) &&
                      getZeroLatencyHeight(I) > getZeroLatencyHeight(maxHeight))
               maxHeight = I;
             else if (getHeight(I) == getHeight(maxHeight) &&

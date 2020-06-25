@@ -292,11 +292,11 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
         if (BBI.isPHI())
           continue;
         MachineInstr *In = &BBI;
-        if ((unsigned)Schedule.getStage(In) == StageNum) {
+	if(!In->isBranch() && (unsigned)Schedule.getStage(In) == StageNum) {
           // Instructions with memoperands in the epilog are updated with
           // conservative values.
           MachineInstr *NewMI = cloneInstr(In, UINT_MAX, 0);
-          updateInstruction(NewMI, i == 1, EpilogStage, 0, VRMap);
+	  updateInstruction(NewMI, i == 1, EpilogStage, 0, VRMap);
           NewBB->push_back(NewMI);
           InstrMap[NewMI] = In;
         }
@@ -325,8 +325,10 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
   } else {
     TII->insertBranch(*KernelBB, KernelBB, EpilogStart, Cond, DebugLoc());
   }
+
   // Add a branch to the loop exit.
   if (EpilogBBs.size() > 0) {
+    TII->removeBranch(*EpilogStart);
     MachineBasicBlock *LastEpilogBB = EpilogBBs.back();
     SmallVector<MachineOperand, 4> Cond1;
     TII->insertBranch(*LastEpilogBB, LoopExitBB, nullptr, Cond1, DebugLoc());
