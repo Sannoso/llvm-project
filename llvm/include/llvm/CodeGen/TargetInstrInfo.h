@@ -95,7 +95,7 @@ public:
         ReturnOpcode(ReturnOpcode) {}
   TargetInstrInfo(const TargetInstrInfo &) = delete;
   TargetInstrInfo &operator=(const TargetInstrInfo &) = delete;
-  virtual ~TargetInstrInfo();
+  virtual ~TargetInstrInfo() = default;
 
   static bool isGenericOpcode(unsigned Opc) {
     return Opc <= TargetOpcode::GENERIC_OP_END;
@@ -687,7 +687,7 @@ public:
   /// apply target-specific updates to the loop once pipelining is complete.
   class PipelinerLoopInfo {
   public:
-    virtual ~PipelinerLoopInfo();
+    virtual ~PipelinerLoopInfo() = default;
     /// Return true if the given instruction should not be pipelined and should
     /// be ignored. An example could be a loop comparison, or induction variable
     /// update with no users being pipelined.
@@ -707,6 +707,7 @@ public:
     /// Modify the loop such that the trip count is
     /// OriginalTC + TripCountAdjust.
     virtual void adjustTripCount(int TripCountAdjust) = 0;
+    virtual void adjustTripCount2(int TripCountAdjust, MachineBasicBlock *KernelBB) {};
 
     /// Called when the loop's preheader has been modified to NewPreheader.
     virtual void setPreheader(MachineBasicBlock *NewPreheader) = 0;

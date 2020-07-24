@@ -20,6 +20,11 @@
 #include "llvm/Support/raw_ostream.h"
 
 #define DEBUG_TYPE "pipeliner"
+
+#define DEBUGSANDER
+#ifdef DEBUGSANDER
+#include <iostream>
+#endif
 using namespace llvm;
 
 void ModuloSchedule::print(raw_ostream &OS) {
@@ -161,6 +166,10 @@ void ModuloScheduleExpander::generatePipelinedLoop() {
                MaxStageCount, MaxStageCount, false);
 
   LLVM_DEBUG(dbgs() << "New block\n"; KernelBB->dump(););
+  #ifdef DEBUGSANDER
+    std::cout << "New block = kernel? = " << std::endl;
+    KernelBB->dump();
+  #endif
 
   SmallVector<MachineBasicBlock *, 4> EpilogBBs;
   // Generate the epilog instructions to complete the pipeline.
@@ -230,6 +239,10 @@ void ModuloScheduleExpander::generateProlog(unsigned LastStage,
       dbgs() << "prolog:\n";
       NewBB->dump();
     });
+ #ifdef DEBUGSANDER
+  std::cout << "prolog = " << std::endl;
+  NewBB->dump();
+ #endif
   }
 
   PredBB->replaceSuccessor(BB, KernelBB);
@@ -312,6 +325,10 @@ void ModuloScheduleExpander::generateEpilog(unsigned LastStage,
       dbgs() << "epilog:\n";
       NewBB->dump();
     });
+  #ifdef DEBUGSANDER
+    std::cout << "epilog = " << std::endl;
+    NewBB->dump();
+  #endif
   }
 
   // Fix any Phi nodes in the loop exit block.
@@ -909,7 +926,8 @@ void ModuloScheduleExpander::addBranches(MachineBasicBlock &PreheaderBB,
 
   if (NewKernel) {
     LoopInfo->setPreheader(PrologBBs[MaxIter]);
-    LoopInfo->adjustTripCount(-(MaxIter + 1));
+//    LoopInfo->adjustTripCount(-(MaxIter + 1));
+    LoopInfo->adjustTripCount2(-(MaxIter + 1), NewKernel);
   }
 }
 
